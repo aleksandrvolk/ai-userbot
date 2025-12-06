@@ -2,9 +2,17 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 from telethon.tl.types import User, Chat, Channel
 from telethon.errors import FloodWaitError, ChatAdminRequiredError
-from config import API_ID, API_HASH, SESSION_NAME, LOG_LEVEL, LOG_FILE
+from config import (
+    API_ID,
+    API_HASH,
+    SESSION_NAME,
+    STRING_SESSION,
+    LOG_LEVEL,
+    LOG_FILE,
+)
 from database import MessageDatabase
 
 # Настройка логирования
@@ -22,7 +30,8 @@ logger = logging.getLogger(__name__)
 db = MessageDatabase()
 
 # Инициализация клиента Telegram
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+session_arg = StringSession(STRING_SESSION) if STRING_SESSION else SESSION_NAME
+client = TelegramClient(session_arg, API_ID, API_HASH)
 
 # Флаг для отслеживания активного парсинга
 parsing_active = {}
@@ -423,8 +432,39 @@ async def main():
     logger.info("Подключено к базе данных")
     
     # Подключение к Telegram
-    await client.start()
-    logger.info("Userbot запущен и готов к работе!")
+    import os
+    if STRING_SESSION:
+        logger.info("Используется STRING_SESSION из переменных окружения")
+        await client.start()
+    else:
+        # Проверяем наличие файла сессии
+        session_file = f\"{SESSION_NAME}.session\"
+        if not os.path.exists(session_file):
+            logger.warning(f\"Файл сессии {session_file} не найден!\")
+            logger.warning(\"Userbot требует авторизацию. Запустите локально один раз для создания сессии.\")
+            logger.warning(\"Или используйте переменные окружения PHONE и PHONE_CODE для авторизации.\")
+            
+            # Попытка авторизации через переменные окружения
+            phone = os.getenv('PHONE')
+            phone_code = os.getenv('PHONE_CODE')
+            
+            if phone and phone_code:
+                logger.info(f\"Попытка авторизации через переменные окружения для {phone}\")
+                try:
+                    await client.start(phone=phone, code_callback=lambda: phone_code)
+                    logger.info(\"Авторизация успешна через переменные окружения!\")
+                except Exception as e:
+                    logger.error(f\"Ошибка авторизации через переменные окружения: {e}\")
+                    logger.error(\"Загрузите файл сессии или авторизуйтесь локально\")
+                    raise
+            else:
+                logger.error(\"Файл сессии не найден и переменные окружения PHONE/PHONE_CODE не указаны\")
+                logger.error(\"Запустите userbot локально один раз для создания сессии, затем загрузите файл на сервер или укажите STRING_SESSION\")
+                raise FileNotFoundError(f\"Файл сессии {session_file} не найден. Загрузите его на сервер или авторизуйтесь локально.\")
+        else:
+            await client.start()
+    
+    logger.info(\"Userbot запущен и готов к работе!\")
     
     # Получение информации о себе
     me = await client.get_me()

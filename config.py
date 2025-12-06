@@ -7,6 +7,8 @@ load_dotenv()
 API_ID = int(os.getenv('API_ID', '0'))
 API_HASH = os.getenv('API_HASH', '')
 SESSION_NAME = os.getenv('SESSION_NAME', 'userbot_session')
+# Optional: use STRING_SESSION instead of session file
+STRING_SESSION = os.getenv('STRING_SESSION', '')
 
 # Database settings
 # Для Bothost.ru используйте /app/data/messages.db
