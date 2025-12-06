@@ -261,22 +261,29 @@ async def parse_chat_history(chat_entity, limit=None, offset_date=None):
         return False
 
 
-@client.on(events.NewMessage)
+@client.on(events.NewMessage(incoming=True))
 async def handler(event):
     """Обработчик новых сообщений"""
     try:
         message = event.message
-        chat = await event.get_chat()
-        sender = await event.get_sender()
+        message_text = message.text or ""
+        chat_id = event.chat_id
+        
+        # Логируем ВСЕ входящие сообщения для отладки
+        logger.info(f"📨 ВХОДЯЩЕЕ сообщение: '{message_text[:100]}' | chat_id: {chat_id} | is_private: {event.is_private}")
         
         # Пропускаем служебные сообщения
         if message.action:
             return
         
         # Пропускаем команды (они обрабатываются отдельными обработчиками)
-        if message.text and message.text.startswith('/'):
-            logger.debug(f"Пропущена команда в общем обработчике: {message.text}")
+        if message_text.startswith('/'):
+            logger.info(f"⚡ Обнаружена команда в общем обработчике: {message_text}")
             return
+        
+        chat = await event.get_chat()
+        sender = await event.get_sender()
+        await process_message(message, chat, sender)
         
         await process_message(message, chat, sender)
         
@@ -312,9 +319,11 @@ async def parse_command_handler(event):
         
         # Команда работает в личных сообщениях (включая Saved Messages)
         # Saved Messages может иметь chat_id равный вашему user_id
-        if not event.is_private:
-            logger.debug(f"Сообщение не из личного чата, пропускаем. Chat ID: {event.chat_id}")
-            return
+        me = await client.get_me()
+        if not event.is_private and chat_id != me.id:
+            logger.warning(f"⚠️ Сообщение не из личного чата. Chat ID: {chat_id}, My ID: {me.id}, is_private: {event.is_private}")
+            # Но все равно обрабатываем для отладки
+            # return  # Временно закомментировано для отладки
         
         # Получаем аргументы команды
         args = event.pattern_match.group(1).strip()
