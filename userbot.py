@@ -273,6 +273,11 @@ async def handler(event):
         if message.action:
             return
         
+        # Пропускаем команды (они обрабатываются отдельными обработчиками)
+        if message.text and message.text.startswith('/'):
+            logger.debug(f"Пропущена команда в общем обработчике: {message.text}")
+            return
+        
         await process_message(message, chat, sender)
         
         chat_info = get_chat_info(chat)
@@ -301,8 +306,12 @@ async def handler_edited(event):
 async def parse_command_handler(event):
     """Обработчик команды /parse для парсинга истории чата"""
     try:
-        # Команда работает только в личных сообщениях
+        # Логируем все входящие сообщения с командами для отладки
+        logger.info(f"Получено сообщение: {event.message.text} от {event.chat_id}, is_private: {event.is_private}")
+        
+        # Команда работает только в личных сообщениях (включая Saved Messages)
         if not event.is_private:
+            logger.debug(f"Сообщение не из личного чата, пропускаем. Chat ID: {event.chat_id}")
             return
         
         # Получаем аргументы команды
@@ -399,6 +408,7 @@ async def stats_command_handler(event):
 async def help_command_handler(event):
     """Обработчик команды /help"""
     try:
+        logger.info(f"Получена команда /help от {event.chat_id}, is_private: {event.is_private}")
         if not event.is_private:
             return
         
