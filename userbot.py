@@ -285,8 +285,6 @@ async def handler(event):
         sender = await event.get_sender()
         await process_message(message, chat, sender)
         
-        await process_message(message, chat, sender)
-        
         chat_info = get_chat_info(chat)
         user_info = get_user_info(sender)
         logger.debug(f"Сохранено сообщение: {chat_info['chat_title']} - {user_info['username'] or user_info['first_name'] or 'Unknown'}")
@@ -415,12 +413,17 @@ async def stats_command_handler(event):
         await event.respond(f"❌ Ошибка: {str(e)}")
 
 
-@client.on(events.NewMessage(pattern=r'^/help$', incoming=True))
+@client.on(events.NewMessage(pattern=r'^/help$'))
 async def help_command_handler(event):
     """Обработчик команды /help"""
     try:
-        logger.info(f"Получена команда /help от chat_id: {event.chat_id}, is_private: {event.is_private}")
-        if not event.is_private:
+        chat_id = event.chat_id
+        me = await client.get_me()
+        is_saved_messages = (chat_id == me.id)
+        
+        logger.info(f"🔍 ОБРАБОТЧИК /help: chat_id: {chat_id} | is_private: {event.is_private} | is_saved: {is_saved_messages}")
+        
+        if not event.is_private and not is_saved_messages:
             return
         
         help_text = """
