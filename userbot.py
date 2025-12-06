@@ -302,14 +302,16 @@ async def handler_edited(event):
         logger.error(f"Ошибка при обработке отредактированного сообщения: {e}", exc_info=True)
 
 
-@client.on(events.NewMessage(pattern=r'^/parse\s+(.+)$', incoming=True, from_users=None))
+@client.on(events.NewMessage(pattern=r'^/parse\s+(.+)$', incoming=True))
 async def parse_command_handler(event):
     """Обработчик команды /parse для парсинга истории чата"""
     try:
         # Логируем все входящие сообщения с командами для отладки
-        logger.info(f"Получено сообщение: {event.message.text} от {event.chat_id}, is_private: {event.is_private}")
+        message_text = event.message.text or ""
+        logger.info(f"Получена команда /parse: {message_text} от chat_id: {event.chat_id}, is_private: {event.is_private}")
         
-        # Команда работает только в личных сообщениях (включая Saved Messages)
+        # Команда работает в личных сообщениях (включая Saved Messages)
+        # Saved Messages может иметь chat_id равный вашему user_id
         if not event.is_private:
             logger.debug(f"Сообщение не из личного чата, пропускаем. Chat ID: {event.chat_id}")
             return
@@ -404,11 +406,11 @@ async def stats_command_handler(event):
         await event.respond(f"❌ Ошибка: {str(e)}")
 
 
-@client.on(events.NewMessage(pattern=r'^/help$', incoming=True, from_users=None))
+@client.on(events.NewMessage(pattern=r'^/help$', incoming=True))
 async def help_command_handler(event):
     """Обработчик команды /help"""
     try:
-        logger.info(f"Получена команда /help от {event.chat_id}, is_private: {event.is_private}")
+        logger.info(f"Получена команда /help от chat_id: {event.chat_id}, is_private: {event.is_private}")
         if not event.is_private:
             return
         
