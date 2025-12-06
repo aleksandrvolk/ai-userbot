@@ -464,7 +464,7 @@ async def main():
         else:
             await client.start()
     
-    logger.info(\"Userbot запущен и готов к работе!\")
+    logger.info("Userbot запущен и готов к работе!")
     
     # Получение информации о себе
     me = await client.get_me()
