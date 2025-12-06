@@ -438,29 +438,29 @@ async def main():
         await client.start()
     else:
         # Проверяем наличие файла сессии
-        session_file = f\"{SESSION_NAME}.session\"
+        session_file = f"{SESSION_NAME}.session"
         if not os.path.exists(session_file):
-            logger.warning(f\"Файл сессии {session_file} не найден!\")
-            logger.warning(\"Userbot требует авторизацию. Запустите локально один раз для создания сессии.\")
-            logger.warning(\"Или используйте переменные окружения PHONE и PHONE_CODE для авторизации.\")
+            logger.warning(f"Файл сессии {session_file} не найден!")
+            logger.warning("Userbot требует авторизацию. Запустите локально один раз для создания сессии.")
+            logger.warning("Или используйте переменные окружения PHONE и PHONE_CODE для авторизации.")
             
             # Попытка авторизации через переменные окружения
             phone = os.getenv('PHONE')
             phone_code = os.getenv('PHONE_CODE')
             
             if phone and phone_code:
-                logger.info(f\"Попытка авторизации через переменные окружения для {phone}\")
+                logger.info(f"Попытка авторизации через переменные окружения для {phone}")
                 try:
                     await client.start(phone=phone, code_callback=lambda: phone_code)
-                    logger.info(\"Авторизация успешна через переменные окружения!\")
+                    logger.info("Авторизация успешна через переменные окружения!")
                 except Exception as e:
-                    logger.error(f\"Ошибка авторизации через переменные окружения: {e}\")
-                    logger.error(\"Загрузите файл сессии или авторизуйтесь локально\")
+                    logger.error(f"Ошибка авторизации через переменные окружения: {e}")
+                    logger.error("Загрузите файл сессии или авторизуйтесь локально")
                     raise
             else:
-                logger.error(\"Файл сессии не найден и переменные окружения PHONE/PHONE_CODE не указаны\")
-                logger.error(\"Запустите userbot локально один раз для создания сессии, затем загрузите файл на сервер или укажите STRING_SESSION\")
-                raise FileNotFoundError(f\"Файл сессии {session_file} не найден. Загрузите его на сервер или авторизуйтесь локально.\")
+                logger.error("Файл сессии не найден и переменные окружения PHONE/PHONE_CODE не указаны")
+                logger.error("Запустите userbot локально один раз для создания сессии, затем загрузите файл на сервер или укажите STRING_SESSION")
+                raise FileNotFoundError(f"Файл сессии {session_file} не найден. Загрузите его на сервер или авторизуйтесь локально.")
         else:
             await client.start()
     
