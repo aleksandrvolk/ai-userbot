@@ -74,3 +74,7 @@ Dockerfile
 *.bak
 backup/
 backups/
+
+# Documentation files (except README.md)
+*.md
+!README.md
