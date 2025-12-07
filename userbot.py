@@ -307,21 +307,25 @@ async def handler_edited(event):
         logger.error(f"Ошибка при обработке отредактированного сообщения: {e}", exc_info=True)
 
 
-@client.on(events.NewMessage(pattern=r'^/parse\s+(.+)$', incoming=True))
+@client.on(events.NewMessage(pattern=r'^/parse\s+(.+)$'))
 async def parse_command_handler(event):
     """Обработчик команды /parse для парсинга истории чата"""
     try:
         # Логируем все входящие сообщения с командами для отладки
         message_text = event.message.text or ""
-        logger.info(f"Получена команда /parse: {message_text} от chat_id: {event.chat_id}, is_private: {event.is_private}")
+        chat_id = event.chat_id
+        
+        # Получаем информацию о себе для проверки Saved Messages
+        me = await client.get_me()
+        is_saved_messages = (chat_id == me.id)
+        
+        logger.info(f"🔍 ОБРАБОТЧИК /parse: '{message_text}' | chat_id: {chat_id} | is_private: {event.is_private} | is_saved: {is_saved_messages} | my_id: {me.id}")
         
         # Команда работает в личных сообщениях (включая Saved Messages)
-        # Saved Messages может иметь chat_id равный вашему user_id
-        me = await client.get_me()
-        if not event.is_private and chat_id != me.id:
-            logger.warning(f"⚠️ Сообщение не из личного чата. Chat ID: {chat_id}, My ID: {me.id}, is_private: {event.is_private}")
-            # Но все равно обрабатываем для отладки
-            # return  # Временно закомментировано для отладки
+        # Saved Messages имеет chat_id равный вашему user_id
+        if not event.is_private and not is_saved_messages:
+            logger.warning(f"⚠️ Сообщение не из личного чата. Chat ID: {chat_id}, My ID: {me.id}")
+            return
         
         # Получаем аргументы команды
         args = event.pattern_match.group(1).strip()
