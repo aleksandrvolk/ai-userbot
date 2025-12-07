@@ -331,20 +331,30 @@ async def parse_command_handler(event):
             logger.warning(f"⚠️ Сообщение не из личного чата. Chat ID: {chat_id}, My ID: {me.id}")
             return
         
-        # Получаем аргументы команды
-        args = event.pattern_match.group(1).strip()
+        # Получаем аргументы команды - парсим вручную из текста сообщения
+        # Формат: /parse @username или /parse @username limit=1000
+        parts = message_text.split(None, 1)  # Разделяем по пробелам, максимум 2 части
+        if len(parts) < 2:
+            await event.respond("❌ Неверный формат команды. Используйте: `/parse @username` или `/parse @username limit=1000`")
+            return
+        
+        args = parts[1].strip()  # Все что после /parse
         
         # Парсим аргументы: /parse @username или /parse @username limit=1000
-        parts = args.split()
-        chat_identifier = parts[0]
+        args_parts = args.split()
+        chat_identifier = args_parts[0]
         limit = None
         
+        logger.info(f"📋 Парсинг аргументов: chat_identifier='{chat_identifier}', остальное='{args_parts[1:] if len(args_parts) > 1 else []}'")
+        
         # Поиск параметра limit
-        for part in parts[1:]:
+        for part in args_parts[1:]:
             if part.startswith('limit='):
                 try:
                     limit = int(part.split('=')[1])
+                    logger.info(f"📊 Установлен лимит: {limit}")
                 except ValueError:
+                    logger.warning(f"⚠️ Неверный формат limit: {part}")
                     pass
         
         await event.respond(f"🔄 Начинаю парсинг чата: {chat_identifier}\n⏳ Это может занять некоторое время...")
