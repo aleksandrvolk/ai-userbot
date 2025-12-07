@@ -308,7 +308,8 @@ async def handler_edited(event):
         logger.error(f"Ошибка при обработке отредактированного сообщения: {e}", exc_info=True)
 
 
-@client.on(events.NewMessage(pattern=r'^/parse\s+(.+)$'))
+# Обработчик команды /parse - используем более гибкий паттерн
+@client.on(events.NewMessage(pattern=r'^/parse'))
 async def parse_command_handler(event):
     """Обработчик команды /parse для парсинга истории чата"""
     try:
