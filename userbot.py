@@ -277,8 +277,9 @@ async def handler(event):
             return
         
         # Пропускаем команды (они обрабатываются отдельными обработчиками)
+        # НО НЕ БЛОКИРУЕМ их - пусть специальные обработчики сработают
         if message_text.startswith('/'):
-            logger.info(f"⚡ Обнаружена команда в общем обработчике: {message_text}")
+            logger.info(f"⚡ Обнаружена команда в общем обработчике: '{message_text}' - пропускаем для специальных обработчиков")
             return
         
         chat = await event.get_chat()
@@ -311,15 +312,17 @@ async def handler_edited(event):
 async def parse_command_handler(event):
     """Обработчик команды /parse для парсинга истории чата"""
     try:
-        # Логируем все входящие сообщения с командами для отладки
+        # Логируем СРАЗУ при срабатывании обработчика
         message_text = event.message.text or ""
         chat_id = event.chat_id
+        
+        logger.info(f"🎯 ОБРАБОТЧИК /parse СРАБОТАЛ! Сообщение: '{message_text}' | chat_id: {chat_id}")
         
         # Получаем информацию о себе для проверки Saved Messages
         me = await client.get_me()
         is_saved_messages = (chat_id == me.id)
         
-        logger.info(f"🔍 ОБРАБОТЧИК /parse: '{message_text}' | chat_id: {chat_id} | is_private: {event.is_private} | is_saved: {is_saved_messages} | my_id: {me.id}")
+        logger.info(f"🔍 Детали: is_private: {event.is_private} | is_saved: {is_saved_messages} | my_id: {me.id}")
         
         # Команда работает в личных сообщениях (включая Saved Messages)
         # Saved Messages имеет chat_id равный вашему user_id
